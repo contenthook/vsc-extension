@@ -21,14 +21,14 @@
 </p>
 
 <p align="center">
+  The extension bringing the contenthook utilities to vscode
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png">
     <img src="https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png" alt="Screenshot">
   </picture>
-</p>
-
-<p align="center">
-  The extension bringing the contenthook utilities to vscode
 </p>
 
 ## Features
