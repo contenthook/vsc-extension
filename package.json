@@ -4,18 +4,52 @@
   "description": "The extension bringing the contenthook utilities to vscode",
   "version": "1.0.0",
   "publisher": "contenthook",
+  "icon": "media/logo.png",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
   ],
+  "homepage": "https://github.com/contenthook/vsc-extension",
+  "bugs": {
+    "url": "https://github.com/contenthook/vsc-extension/issues"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "contenthook",
+    "content",
+    "hook",
+    "extension",
+    "vscode"
+  ],
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "files": [
+    "src/**/*.html",
+    "out/**/*",
+    "media/**/*",
+    "*.json"
+  ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/contenthook/vsc-extension"
+  },
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Your Contenthook API key",
+      "title": "Contenthook",
       "properties": {
         "contenthook.apiKey": {
           "type": "string",
@@ -46,15 +80,17 @@
       "*"
     ]
   },
-  "scripts": {
-    "vscode:prepublish": "pnpm run compile",
-    "compile": "tsc -p ./ && copyfiles -u 1 src/ui/**/* out",
-    "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+  "vsce": {
+    "files": [
+      "out",
+      "src",
+      "package.json",
+      "README.md",
+      "CHANGELOG.md",
+      "media"
+    ],
+    "dependencies": true,
+    "yarn": false
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
@@ -65,14 +101,13 @@
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^2.29.0",
+    "copyfiles": "^2.4.1",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
-    "prettier": "^3.3.2",
-    "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "copyfiles": "^2.4.1",
     "gray-matter": "^4.0.3",
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5",
     "ws": "^8.17.1"
   }
 }

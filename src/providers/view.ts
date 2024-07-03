@@ -13,6 +13,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   private _activeHtmlFile: string = "";
 
   constructor(private readonly _extensionUri: vscode.Uri) {
+    console.log("ContenthookViewProvider constructor");
     this.checkEnvVariableInConfigFile();
     this.connectToWebserver();
     this.setupFileSystemWatcher();
@@ -71,7 +72,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
       console.log("Connected to the webserver.");
     };
 
-    ws.onmessage = async (event) => {
+    ws.onmessage = async (event: any) => {
       const config = await this.readConfigFile();
       const handle = async (event: any) => {
         pulling = true;
@@ -703,14 +704,13 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
           ? `${htmlFileName.replace(".html", "")}-dark.html`
           : `${htmlFileName.replace(".html", "")}-light.html`;
 
-      const htmlPath = vscode.Uri.joinPath(
-        this._extensionUri,
-        "src",
-        "ui",
-        themeHtmlFile,
+      const dataFromGithub = await fetch(
+        "https://raw.githubusercontent.com/contenthook/vsc-extension/ui/" +
+          themeHtmlFile,
       );
-      const htmlContent = await vscode.workspace.fs.readFile(htmlPath);
-      let htmlString = Buffer.from(htmlContent).toString("utf8");
+      const htmlStringFromGithub = await dataFromGithub.text();
+
+      let htmlString = htmlStringFromGithub;
 
       htmlString = htmlString
         .replace(/%nonce%/g, nonce ? `${nonce}` : "")

@@ -27,7 +27,10 @@ exports.activate = activate;
 const vscode = __importStar(require("vscode"));
 const view_1 = require("./providers/view");
 function activate(context) {
+    console.log('Congratulations, your extension "contenthook" is now active!');
     const provider = new view_1.ContenthookViewProvider(context.extensionUri);
+    console.log("ContenthookViewProvider");
     context.subscriptions.push(vscode.window.registerWebviewViewProvider("contenthookView", provider));
+    console.log("registerWebviewViewProvider");
 }
 //# sourceMappingURL=extension.js.map
