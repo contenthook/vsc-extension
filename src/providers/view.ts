@@ -13,7 +13,6 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   private _activeHtmlFile: string = "";
 
   constructor(private readonly _extensionUri: vscode.Uri) {
-    console.log("ContenthookViewProvider constructor");
     this.checkEnvVariableInConfigFile();
     this.connectToWebserver();
     this.setupFileSystemWatcher();
@@ -705,7 +704,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
           : `${htmlFileName.replace(".html", "")}-light.html`;
 
       const dataFromGithub = await fetch(
-        "https://raw.githubusercontent.com/contenthook/vsc-extension/ui/" +
+        "https://raw.githubusercontent.com/contenthook/vsc-extension/main/ui/" +
           themeHtmlFile,
       );
       const htmlStringFromGithub = await dataFromGithub.text();

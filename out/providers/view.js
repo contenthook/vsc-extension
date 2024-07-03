@@ -41,7 +41,6 @@ class ContenthookViewProvider {
     _activeHtmlFile = "";
     constructor(_extensionUri) {
         this._extensionUri = _extensionUri;
-        console.log("ContenthookViewProvider constructor");
         this.checkEnvVariableInConfigFile();
         this.connectToWebserver();
         this.setupFileSystemWatcher();
@@ -519,7 +518,7 @@ class ContenthookViewProvider {
             const themeHtmlFile = (await themeKind) === vscode.ColorThemeKind.Dark
                 ? `${htmlFileName.replace(".html", "")}-dark.html`
                 : `${htmlFileName.replace(".html", "")}-light.html`;
-            const dataFromGithub = await fetch("https://raw.githubusercontent.com/contenthook/vsc-extension/ui/" +
+            const dataFromGithub = await fetch("https://raw.githubusercontent.com/contenthook/vsc-extension/main/ui/" +
                 themeHtmlFile);
             const htmlStringFromGithub = await dataFromGithub.text();
             let htmlString = htmlStringFromGithub;
