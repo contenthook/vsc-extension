@@ -8,9 +8,28 @@
   </a>
 </p>
 
-![Product_img](https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png)
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook">
+    <img src="https://vsmarketplacebadge.apphb.com/version/contenthook.contenthook.svg" alt="Version">
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook">
+    <img src="https://vsmarketplacebadge.apphb.com/installs/contenthook.contenthook.svg" alt="Installs">
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook">
+    <img src="https://vsmarketplacebadge.apphb.com/rating-star/contenthook.contenthook.svg" alt="Rating">
+  </a>
+</p>
 
-The extension bringing the contenthook utilities to vscode
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png">
+    <img src="https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png" alt="Screenshot">
+  </picture>
+</p>
+
+<p align="center">
+  The extension bringing the contenthook utilities to vscode
+</p>
 
 ## Features
 - **Project Initialization**: Initialize a new project contenthook project easily
