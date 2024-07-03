@@ -278,7 +278,7 @@ class ContenthookViewProvider {
         }
     }
     onContentFileChanged = (uri) => {
-        this.performYourFunction(uri);
+        this.contentFileCHanged(uri);
     };
     setupFileSystemWatcher() {
         const watcher = vscode.workspace.createFileSystemWatcher("**/content/*.{md,mdx,markdown}");
@@ -319,7 +319,7 @@ class ContenthookViewProvider {
             }
         }
     }
-    async performYourFunction(uri) {
+    async contentFileCHanged(uri) {
         if (pulling) {
             return null;
         }

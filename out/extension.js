@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 const vscode = __importStar(require("vscode"));
-const view_1 = require("./providers/view");
+const view_1 = require("./view");
 function activate(context) {
     const provider = new view_1.ContenthookViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider("contenthookView", provider));

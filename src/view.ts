@@ -345,7 +345,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   }
 
   private onContentFileChanged = (uri: vscode.Uri) => {
-    this.performYourFunction(uri);
+    this.contentFileCHanged(uri);
   };
 
   private setupFileSystemWatcher() {
@@ -404,7 +404,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async performYourFunction(uri: vscode.Uri) {
+  private async contentFileCHanged(uri: vscode.Uri) {
     if (pulling) {
       return null;
     }

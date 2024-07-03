@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ContenthookViewProvider } from "./providers/view";
+import { ContenthookViewProvider } from "./view";
 
 function activate(context: vscode.ExtensionContext) {
   const provider = new ContenthookViewProvider(context.extensionUri);
