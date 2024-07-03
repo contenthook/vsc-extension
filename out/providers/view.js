@@ -83,7 +83,7 @@ class ContenthookViewProvider {
                 clientId: customId,
             }),
         });
-        let webserver = "ws://localhost:8888?id=" + customId;
+        let webserver = "wss://api.contenthook.dev/v1/websocket?id=" + customId;
         let ws = new ws_1.default(webserver);
         ws.onopen = () => {
             console.log("Connected to the webserver.");
@@ -323,7 +323,6 @@ class ContenthookViewProvider {
         if (pulling) {
             return null;
         }
-        console.log(pulling);
         const configFileData = await this.readConfigFile();
         if (configFileData.autopush) {
             const configFiles = await vscode.workspace.findFiles("**/contenthook.config.{js,ts,mjs,cjs}", "**/node_modules/**", 1);

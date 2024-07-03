@@ -64,7 +64,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
       }),
     });
 
-    let webserver = "ws://localhost:8888?id=" + customId;
+    let webserver = "wss://api.contenthook.dev/v1/websocket?id=" + customId;
     let ws = new WebSocket(webserver);
 
     ws.onopen = () => {
@@ -408,7 +408,6 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
     if (pulling) {
       return null;
     }
-    console.log(pulling);
     const configFileData = await this.readConfigFile();
 
     if (configFileData.autopush) {
