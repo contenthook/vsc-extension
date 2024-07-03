@@ -12,8 +12,7 @@ The extension bringing the contenthook utilities to vscode
 
 ## Features
 
-\!\[Project Initialization\]\(media/feature-1.png\)
-\!\[Project Utilities and Settings]\(media/feauire-2.png\)
+\!\[Project Initialization\]\(media/product_img.png\)
 
 ## Requirements
 
