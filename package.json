@@ -60,6 +60,7 @@
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/vscode": "^1.90.0",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-cli": "^0.0.9",
@@ -71,6 +72,7 @@
   },
   "dependencies": {
     "copyfiles": "^2.4.1",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "ws": "^8.17.1"
   }
 }

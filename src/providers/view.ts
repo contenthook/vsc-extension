@@ -3,6 +3,10 @@ import * as vscode from "vscode";
 import { pathToFileURL } from "node:url";
 import * as path from "node:path";
 import matter from "gray-matter";
+import WebSocket from "ws";
+
+let customId;
+let pulling: boolean;
 
 export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   private _intervalId?: NodeJS.Timeout;
@@ -10,6 +14,7 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
 
   constructor(private readonly _extensionUri: vscode.Uri) {
     this.checkEnvVariableInConfigFile();
+    this.connectToWebserver();
     this.setupFileSystemWatcher();
   }
 
@@ -21,6 +26,206 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
+  }
+
+  private async createClientId({ length = 6 } = {}) {
+    const possible = "123456789";
+    let clientId = "";
+    for (let i = 0; i < length; i++) {
+      clientId += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return clientId;
+  }
+
+  private async connectToWebserver() {
+    const config = await this.readConfigFile();
+    if (config.autopull === false) {
+      return;
+    }
+
+    const apiKeyFromSettings = vscode.workspace
+      .getConfiguration()
+      .get<string>("contenthook.apiKey");
+
+    if (!apiKeyFromSettings) {
+      return;
+    }
+
+    customId = await this.createClientId({ length: 64 });
+
+    await fetch("https://api.contenthook.dev/v1/websocket/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        apiKey: apiKeyFromSettings,
+        clientId: customId,
+      }),
+    });
+
+    let webserver = "ws://localhost:8888?id=" + customId;
+    let ws = new WebSocket(webserver);
+
+    ws.onopen = () => {
+      console.log("Connected to the webserver.");
+    };
+
+    ws.onmessage = async (event) => {
+      const config = await this.readConfigFile();
+      const handle = async (event: any) => {
+        pulling = true;
+        const configFileData = await this.readConfigFile();
+
+        if (configFileData.autopull) {
+          const configFiles = await vscode.workspace.findFiles(
+            "**/contenthook.config.{js,ts,mjs,cjs}",
+            "**/node_modules/**",
+            1,
+          );
+
+          if (configFiles.length > 0) {
+            const configFile = configFiles[0];
+            let configFilePath = configFile.fsPath;
+
+            const configPath = path.join(configFilePath);
+            let configModule;
+            try {
+              configModule = await import(`${pathToFileURL(configPath)}`);
+            } catch (error) {
+              return vscode.window.showErrorMessage(
+                `Error: Failed to import config file.\n${error}`,
+              );
+            }
+
+            const config = configModule.default;
+
+            class Response {
+              code: number | undefined;
+              message: string | undefined;
+              data: any;
+              errors: any;
+            }
+
+            const response = (await fetch(
+              `https://api.contenthook.dev/v1/content/all`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ key: apiKeyFromSettings }),
+              },
+            ).then((res) => res.json())) as Response;
+
+            if (response?.errors && response?.errors[0]?.code === 403) {
+              return vscode.window.showErrorMessage(
+                "Invalid Project API Key. Please check your API Key in the Contenthook extension settings.",
+              );
+            }
+
+            if (
+              vscode.workspace.workspaceFolders &&
+              vscode.workspace.workspaceFolders.length > 0
+            ) {
+              const workspaceFolderPath =
+                vscode.workspace.workspaceFolders[0].uri.fsPath;
+              const _contentsFolder = path.join(
+                workspaceFolderPath,
+                config.contentPath.replace("./", ""),
+              );
+
+              response.data.forEach(
+                async (content: {
+                  title: string;
+                  metadata: any;
+                  markdown: string;
+                }) => {
+                  if (!_contentsFolder) {
+                    return;
+                  }
+                  const filePath = path.join(_contentsFolder, content.title);
+
+                  let frontMatter = "---\n";
+                  Object.entries(content.metadata).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                      frontMatter += `${key}: [${value.map((v) => `"${v}"`).join(", ")}]\n`;
+                    } else if (
+                      typeof value === "string" &&
+                      value.match(
+                        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+                      )
+                    ) {
+                      const formattedDate = value.split("T")[0];
+                      frontMatter += `${key}: ${formattedDate}\n`;
+                    } else {
+                      frontMatter += `${key}: ${value}\n`;
+                    }
+                  });
+                  frontMatter += "---\n";
+
+                  let fileData = frontMatter + content.markdown;
+
+                  fileData = fileData
+                    .replace(/\\\\/g, "\\")
+                    .replace(/\\n/g, "\n")
+                    .replace(/\\r/g, "\r")
+                    .replace(/\\t/g, "\t")
+                    .replace(/\\"/g, '"')
+                    .replace(/\\'/g, "'");
+
+                  const uri = vscode.Uri.file(filePath);
+
+                  const fileExists = await vscode.workspace.fs.stat(uri).then(
+                    () => true,
+                    () => false,
+                  );
+
+                  if (fileExists) {
+                    const fileDataRaw = Buffer.from(fileData, "utf8");
+                    await vscode.workspace.fs.writeFile(uri, fileDataRaw);
+                  } else {
+                    const fileDataRaw = Buffer.from(fileData, "utf8");
+                    await vscode.workspace.fs.writeFile(uri, fileDataRaw);
+                  }
+                },
+              );
+            } else {
+              return vscode.window.showErrorMessage(
+                "No workspace folder found.",
+              );
+            }
+
+            pulling = false;
+            return vscode.window.showInformationMessage(
+              "Contents pulled successfully.",
+            );
+          }
+        }
+      };
+
+      if (config.autopull === false) {
+        return;
+      }
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Pulling contents from the Contenthook cloud...",
+          cancellable: false,
+        },
+        async (progress) => {
+          try {
+            await handle(event);
+            progress.report({ increment: 100 });
+          } catch (error) {
+            console.error("Error during content pull:", error);
+            vscode.window.showErrorMessage(
+              "Failed to pull contents from the Contenthook cloud.",
+            );
+          }
+        },
+      );
+    };
   }
 
   public async resolveWebviewView(
@@ -94,10 +299,9 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
       try {
         configModule = await import(`${pathToFileURL(configPath)}`);
       } catch (error) {
-        vscode.window.showErrorMessage(
+        return vscode.window.showErrorMessage(
           `Error: Failed to import config file.\n${error}`,
         );
-        return;
       }
 
       const config = configModule.default;
@@ -201,6 +405,10 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async performYourFunction(uri: vscode.Uri) {
+    if (pulling) {
+      return null;
+    }
+    console.log(pulling);
     const configFileData = await this.readConfigFile();
 
     if (configFileData.autopush) {
@@ -219,10 +427,9 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
         try {
           configModule = await import(`${pathToFileURL(configPath)}`);
         } catch (error) {
-          vscode.window.showErrorMessage(
+          return vscode.window.showErrorMessage(
             `Error: Failed to import config file.\n${error}`,
           );
-          return;
         }
 
         const config = configModule.default;
@@ -234,15 +441,14 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
           );
           contentMetaData = ContentMetaData;
           if (!contentMetaData) {
-            vscode.window.showErrorMessage(
+            return vscode.window.showErrorMessage(
               "ContentMetaData is not defined in the config file. Read more here: https://docs.contenthook.dev/config/ContentMetaData",
             );
           }
         } catch (error) {
-          vscode.window.showErrorMessage(
+          return vscode.window.showErrorMessage(
             `Error: Failed to import content file.\n${error}`,
           );
-          return;
         }
 
         const apiKeyFromSettings = vscode.workspace
@@ -258,180 +464,199 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
             cancellable: false,
           },
           async (progress) => {
-            const contents = await vscode.workspace.findFiles(
-              `**/${config.contentPath.replace("./", "")}/*.{md,mdx,markdown}`,
-              "**/node_modules/**",
-            );
-            if (contents.length > 0) {
-              const contentsData = contents.map(async (content) => {
-                let fileDataRaw = (await vscode.workspace.fs.readFile(
-                  content,
-                )) as Uint8Array;
+            try {
+              const contents = await vscode.workspace.findFiles(
+                `**/${config.contentPath.replace("./", "")}/*.{md,mdx,markdown}`,
+                "**/node_modules/**",
+              );
+              if (contents.length > 0) {
+                const contentsData = contents.map(async (content) => {
+                  let fileDataRaw = (await vscode.workspace.fs.readFile(
+                    content,
+                  )) as Uint8Array;
 
-                let buffer = Buffer.from(fileDataRaw);
+                  let buffer = Buffer.from(fileDataRaw);
 
-                const dataFromMatter = await matter(buffer);
-                const fileData = dataFromMatter.content;
-                let metaData = dataFromMatter.data;
-                let file = content;
+                  const dataFromMatter = await matter(buffer);
+                  const fileData = dataFromMatter.content;
+                  let metaData = dataFromMatter.data;
+                  let file = content;
 
-                if (Object.keys(metaData).length === 0) {
-                  const propertiesList = Object.entries(contentMetaData)
-                    .map(([key, value]) => {
-                      if (typeof value === "function") {
-                        return `${key}: ${value()}`;
-                      } else if (Array.isArray(value)) {
-                        return `${key}: ${value.join(", ")}`;
-                      } else {
-                        return `${key}: ${value}`;
-                      }
-                    })
-                    .join(", ");
+                  if (Object.keys(metaData).length === 0) {
+                    const propertiesList = Object.entries(contentMetaData)
+                      .map(([key, value]) => {
+                        if (typeof value === "function") {
+                          return `${key}: ${value()}`;
+                        } else if (Array.isArray(value)) {
+                          return `${key}: ${value.join(", ")}`;
+                        } else {
+                          return `${key}: ${value}`;
+                        }
+                      })
+                      .join(", ");
 
-                  const message = `Metadata is missing in ${file}. Please add it. The following properties are required: \n\n ${
-                    propertiesList.length > 0
-                      ? propertiesList
-                      : "No metadata properties defined"
-                  }`;
+                    const message = `Metadata is missing in ${file}. Please add it. The following properties are required: \n\n ${
+                      propertiesList.length > 0
+                        ? propertiesList
+                        : "No metadata properties defined"
+                    }`;
 
-                  vscode.window.showErrorMessage(message);
-                  return;
-                }
-
-                let error = false;
-                for (let meta of Object.keys(metaData)) {
-                  if (!contentMetaData.hasOwnProperty(meta)) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" in file ${content.fsPath} is not defined in the ContentMetaData object in the config file. Please add it to the config and update all your contents, or remove it.`,
-                    );
-                    error = true;
-                    break;
+                    return vscode.window.showErrorMessage(message);
                   }
 
-                  if (!metaData.hasOwnProperty(meta)) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" is missing in ${file}. Please add it.`,
-                    );
-                    error = true;
-                    break;
-                  }
+                  let error = false;
+                  for (let meta of Object.keys(metaData)) {
+                    if (!contentMetaData.hasOwnProperty(meta)) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" in file ${content.fsPath} is not defined in the ContentMetaData object in the config file. Please add it to the config and update all your contents, or remove it.`,
+                      );
+                      error = true;
+                      break;
+                    }
 
-                  if (!contentMetaData.hasOwnProperty(meta)) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" is not defined in the content (file: ${content.fsPath}) file. Please add it to the markdown file.`,
-                    );
-                    error = true;
-                    break;
-                  }
+                    if (!metaData.hasOwnProperty(meta)) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" is missing in ${file}. Please add it.`,
+                      );
+                      error = true;
+                      break;
+                    }
 
-                  const expectedType = contentMetaData[meta];
-                  const actualValue = metaData[meta];
+                    if (!contentMetaData.hasOwnProperty(meta)) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" is not defined in the content (file: ${content.fsPath}) file. Please add it to the markdown file.`,
+                      );
+                      error = true;
+                      break;
+                    }
 
-                  if (expectedType === Date && !(actualValue instanceof Date)) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" should be a Date in ${file}. Please correct it.`,
-                    );
-                    error = true;
-                    break;
-                  }
+                    const expectedType = contentMetaData[meta];
+                    const actualValue = metaData[meta];
 
-                  if (
-                    expectedType instanceof Array &&
-                    !(actualValue instanceof Array)
-                  ) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" should be an Array in ${file}. Please correct it.`,
-                    );
-                    error = true;
-                    break;
-                  }
+                    if (
+                      expectedType === Date &&
+                      !(actualValue instanceof Date)
+                    ) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" should be a Date in ${file}. Please correct it.`,
+                      );
+                      error = true;
+                      break;
+                    }
 
-                  if (
-                    expectedType !== Date &&
-                    !Array.isArray(expectedType) &&
-                    typeof actualValue !== expectedType.name.toLowerCase()
-                  ) {
-                    vscode.window.showErrorMessage(
-                      `Metadata property "${meta}" should be a ${expectedType.name.toLowerCase()} in ${file}. Please correct it.`,
-                    );
-                    error = true;
-                    break;
-                  }
+                    if (
+                      expectedType instanceof Array &&
+                      !(actualValue instanceof Array)
+                    ) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" should be an Array in ${file}. Please correct it.`,
+                      );
+                      error = true;
+                      break;
+                    }
 
-                  if (expectedType instanceof Array) {
-                    for (let value of actualValue) {
-                      if (typeof value !== expectedType[0].name.toLowerCase()) {
-                        vscode.window.showErrorMessage(
-                          `Metadata property "${meta}" should be an Array of ${expectedType[0].name.toLowerCase()} in ${file}. Please correct it.`,
-                        );
-                        error = true;
-                        break;
+                    if (
+                      expectedType !== Date &&
+                      !Array.isArray(expectedType) &&
+                      typeof actualValue !== expectedType.name.toLowerCase()
+                    ) {
+                      vscode.window.showErrorMessage(
+                        `Metadata property "${meta}" should be a ${expectedType.name.toLowerCase()} in ${file}. Please correct it.`,
+                      );
+                      error = true;
+                      break;
+                    }
+
+                    if (expectedType instanceof Array) {
+                      for (let value of actualValue) {
+                        if (
+                          typeof value !== expectedType[0].name.toLowerCase()
+                        ) {
+                          vscode.window.showErrorMessage(
+                            `Metadata property "${meta}" should be an Array of ${expectedType[0].name.toLowerCase()} in ${file}. Please correct it.`,
+                          );
+                          error = true;
+                          break;
+                        }
                       }
                     }
-                  }
 
+                    if (error) {
+                      break;
+                    }
+                  }
                   if (error) {
-                    break;
+                    process.exit(1);
                   }
-                }
-                if (error) {
-                  process.exit(1);
-                }
 
-                let _fileContent;
-                _fileContent = dataFromMatter.content
-                  .replace(/\\/g, "\\\\")
-                  .replace(/\n/g, "\\n")
-                  .replace(/\r/g, "\\r")
-                  .replace(/\t/g, "\\t")
-                  .replace(/"/g, '\\"')
-                  .replace(/'/g, "\\'");
+                  let _fileContent;
+                  _fileContent = dataFromMatter.content
+                    .replace(/\\/g, "\\\\")
+                    .replace(/\n/g, "\\n")
+                    .replace(/\r/g, "\\r")
+                    .replace(/\t/g, "\\t")
+                    .replace(/"/g, '\\"')
+                    .replace(/'/g, "\\'");
 
-                const data = {
-                  key: apiKey,
-                  content: _fileContent,
-                  fileName: path.basename(content.fsPath),
-                  metadata: metaData,
-                };
+                  const data = {
+                    key: apiKey,
+                    content: _fileContent,
+                    fileName: path.basename(content.fsPath),
+                    metadata: metaData,
+                  };
 
-                const response = await fetch(
-                  `https://api.contenthook.dev/v1/content/update`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
+                  const response = await fetch(
+                    `https://api.contenthook.dev/v1/content/update/exte`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(data),
                     },
-                    body: JSON.stringify(data),
-                  },
-                ).then((res) => res.json());
+                  ).then((res) => res.json());
 
-                return response;
-              });
+                  return response;
+                });
 
-              class Response {
-                code: number | undefined;
-                message: string | undefined;
-                errors: any;
-              }
+                class Response {
+                  code: number | undefined;
+                  message: string | undefined;
+                  errors: any;
+                }
 
-              const response = (await Promise.all(contentsData)) as Response[];
+                const response = (await Promise.all(
+                  contentsData,
+                )) as Response[];
 
-              if (response[0]?.errors && response[0]?.errors[0]?.code === 403) {
-                vscode.window.showErrorMessage(
-                  "Invalid Project API Key. Please check your API Key in the Contenthook extension settings.",
-                );
-                return;
-              }
+                if (
+                  response[0]?.errors &&
+                  response[0]?.errors[0]?.code === 403
+                ) {
+                  return vscode.window.showErrorMessage(
+                    "Invalid Project API Key. Please check your API Key in the Contenthook extension settings.",
+                  );
+                }
 
-              if (response.every((res) => res?.code === 200)) {
-                vscode.window.showInformationMessage(
-                  "Contents pushed successfully.",
-                );
+                progress.report({ increment: 100 });
+
+                if (response.every((res) => res?.code === 200)) {
+                  return vscode.window.showInformationMessage(
+                    "Contents pushed successfully.",
+                  );
+                } else {
+                  return vscode.window.showErrorMessage(
+                    "Some contents failed to push.",
+                  );
+                }
               } else {
-                vscode.window.showErrorMessage("Some contents failed to push.");
+                return vscode.window.showErrorMessage("No content file found.");
               }
-            } else {
-              vscode.window.showErrorMessage("No content file found.");
+            } catch (error) {
+              console.error("Error during content push:", error);
+              vscode.window.showErrorMessage(
+                "Failed to push contents to the Contenthook cloud.",
+              );
             }
           },
         );

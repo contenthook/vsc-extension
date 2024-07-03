@@ -13,6 +13,9 @@ importers:
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
+      ws:
+        specifier: ^8.17.1
+        version: 8.17.1
     devDependencies:
       "@types/mocha":
         specifier: ^10.0.7
@@ -23,6 +26,9 @@ importers:
       "@types/vscode":
         specifier: ^1.90.0
         version: 1.90.0
+      "@types/ws":
+        specifier: ^8.5.10
+        version: 8.5.10
       "@typescript-eslint/eslint-plugin":
         specifier: ^7.14.1
         version: 7.15.0(@typescript-eslint/parser@7.15.0(eslint@8.57.0)(typescript@5.5.3))(eslint@8.57.0)(typescript@5.5.3)
@@ -190,6 +196,12 @@ packages:
     resolution:
       {
         integrity: sha512-oT+ZJL7qHS9Z8bs0+WKf/kQ27qWYR3trsXpq46YDjFqBsMLG4ygGGjPaJ2tyrH0wJzjOEmDyg9PDJBBhWg9pkQ==,
+      }
+
+  "@types/ws@8.5.10":
+    resolution:
+      {
+        integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==,
       }
 
   "@typescript-eslint/eslint-plugin@7.15.0":
@@ -1832,6 +1844,21 @@ packages:
         integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==,
       }
 
+  ws@8.17.1:
+    resolution:
+      {
+        integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==,
+      }
+    engines: { node: ">=10.0.0" }
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ">=5.0.2"
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xtend@4.0.2:
     resolution:
       {
@@ -1970,6 +1997,10 @@ snapshots:
       undici-types: 5.26.5
 
   "@types/vscode@1.90.0": {}
+
+  "@types/ws@8.5.10":
+    dependencies:
+      "@types/node": 20.14.9
 
   "@typescript-eslint/eslint-plugin@7.15.0(@typescript-eslint/parser@7.15.0(eslint@8.57.0)(typescript@5.5.3))(eslint@8.57.0)(typescript@5.5.3)":
     dependencies:
@@ -2947,6 +2978,8 @@ snapshots:
       strip-ansi: 7.1.0
 
   wrappy@1.0.2: {}
+
+  ws@8.17.1: {}
 
   xtend@4.0.2: {}
 
