@@ -8,11 +8,15 @@
   </a>
 </p>
 
+![Product_img](https://github.com/contenthook/vsc-extension/blob/main/media/product_img.png)
+
 The extension bringing the contenthook utilities to vscode
 
 ## Features
-
-\!\[Project Initialization\]\(media/product_img.png\)
+- **Project Initialization**: Initialize a new project contenthook project easily
+- **Special Feature Settings**: Configure the special features of contenthook
+- **Auto-Pull**: Automatically pull the latest content from the contenthook cloud of your api key and contents
+- **Auto-Push**: Automatically push the latest content to the contenthook cloud of your api key and contents
 
 ## Requirements
 
