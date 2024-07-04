@@ -2,11 +2,16 @@
   "name": "contenthook",
   "displayName": "Contenthook",
   "description": "The extension bringing the contenthook utilities to vscode",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "contenthook",
   "icon": "media/logo.png",
+  "galleryBanner": {
+    "color": "#007ACC",
+    "theme": "dark"
+  },
+  "preview": true,
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
     "Other"
@@ -24,27 +29,44 @@
     "vscode"
   ],
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
-    "lint": "eslint src --ext ts",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
     "test": "vscode-test",
     "package": "vsce package",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "files": [
-    "out/**/*",
-    "media/**/*",
-    "*.json"
+  "activationEvents": [
+    "onView:contenthookSidebar"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/contenthook/vsc-extension"
   },
+  "badges": [
+    {
+      "url": "https://vsmarketplacebadge.apphb.com/version/contenthook.contenthook.svg",
+      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
+      "description": "Visual Studio Marketplace Version",
+      "type": "svg"
+    },
+    {
+      "url": "https://vsmarketplacebadge.apphb.com/installs-short/contenthook.contenthook.svg",
+      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
+      "description": "Visual Studio Marketplace Installs",
+      "type": "svg"
+    },
+    {
+      "url": "https://vsmarketplacebadge.apphb.com/rating-star/contenthook.contenthook.svg",
+      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
+      "description": "Visual Studio Marketplace Rating",
+      "type": "svg"
+    }
+  ],
   "contributes": {
     "configuration": {
       "type": "object",
@@ -74,10 +96,7 @@
           "type": "webview"
         }
       ]
-    },
-    "activationEvents": [
-      "*"
-    ]
+    }
   },
   "vsce": {
     "files": [
@@ -93,20 +112,20 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.14.9",
+    "@types/vscode": "^1.91.0",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^2.29.0",
     "copyfiles": "^2.4.1",
     "dotenv": "^16.4.5",
-    "eslint": "^8.57.0",
+    "eslint": "^9.6.0",
     "gray-matter": "^4.0.3",
     "prettier": "^3.3.2",
-    "typescript": "^5.4.5",
-    "ws": "^8.17.1"
+    "typescript": "^5.5.3",
+    "ws": "^8.18.0"
   }
 }

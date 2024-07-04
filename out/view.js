@@ -512,16 +512,464 @@ class ContenthookViewProvider {
         const dataBytes = Buffer.from(data, "utf8");
         await vscode.workspace.fs.writeFile(fileUri, dataBytes);
     }
+    async getHtml(webview, htmlFileName) {
+        vscode.window.showInformationMessage("Getting HTML...");
+        const settingsLight = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${webview.cspSource} https://cdn.jsdelivr.net https://www.contenthook.dev; script-src 'nonce-%nonce%' 'self'; img-src https://www.contenthook.dev;"
+    />
+    <title>Contenthook</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body id="body" class="select-none bg-gray-100">
+    <div
+      id="main-container"
+      class="p-2 max-w-full flex flex-col items-center justify-center"
+    >
+      <div
+        id="logo-container"
+        class="flex flex-row mt-6 items-center justify-center w-full"
+      >
+        <img
+          id="logo-img"
+          src="https://www.contenthook.dev/img/logo_invert.png"
+          alt="Contenthook"
+          draggable="false"
+          class="w-12 h-12"
+        />
+        <div id="logo-text" class="text-xl font-medium text-gray-800">
+          Contenthook
+        </div>
+      </div>
+
+      <p id="intro-text" class="text-gray-800 mt-8 text-center">
+        Edit some extra feature settings for your Contenthook project.
+      </p>
+
+      <div
+        id="settings-container"
+        class="flex flex-col mt-8 gap-4 items-center justify-center w-full"
+      >
+        <div
+          id="settings-row"
+          class="flex flex-row items-center justify-between w-full"
+        >
+          <label
+            for="auto-push"
+            id="label-text"
+            class="text-gray-800 text-center"
+          >
+            Auto-push changes to the Cloud
+          </label>
+          <input
+            type="checkbox"
+            id="auto-push"
+            class="form-checkbox h-5 w-5 text-blue-400"
+          />
+        </div>
+        <div
+          id="settings-row"
+          class="flex flex-row items-center justify-between w-full"
+        >
+          <label
+            for="auto-pull"
+            id="label-text"
+            class="text-gray-800 text-center"
+          >
+            Auto-pull changes from the Cloud
+          </label>
+          <input
+            type="checkbox"
+            id="auto-pull"
+            class="form-checkbox h-5 w-5 text-blue-400"
+          />
+        </div>
+      </div>
+
+      <div
+        id="action-container"
+        class="flex flex-col mt-8 gap-4 items-center justify-center w-full"
+        style="align-items: center; justify-content: center"
+      >
+        <button
+          id="save-btn"
+          class="bg-gradient-to-br cursor-pointer text-center from-blue-400 to-blue-500 hover:opacity-90 w-full text-gray-800 font-bold py-1 px-4 rounded-sm"
+        >
+          Save settings
+        </button>
+      </div>
+    </div>
+
+    <script nonce="%nonce%">
+      const vscode = acquireVsCodeApi();
+
+      let autoPush = document.getElementById("auto-push").checked;
+      let autoPull = document.getElementById("auto-pull").checked;
+
+      document.getElementById("auto-push").addEventListener("change", () => {
+        autoPush = document.getElementById("auto-push").checked;
+      });
+
+      document.getElementById("auto-pull").addEventListener("change", () => {
+        autoPull = document.getElementById("auto-pull").checked;
+      });
+
+      document.getElementById("save-btn").addEventListener("click", () => {
+        vscode.postMessage({
+          type: "saveSettings",
+          message: "Settings saved",
+          autoPush: autoPush,
+          autoPull: autoPull,
+        });
+      });
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.type) {
+          case "configData":
+            const { autopush, autopull } = message.data;
+            document.getElementById("auto-push").checked = autopush;
+            document.getElementById("auto-pull").checked = autopull;
+            break;
+        }
+      });
+    </script>
+
+    <script nonce="%nonce%">
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.command) {
+          case "updateTheme":
+            document.documentElement.innerHTML = message.htmlContent;
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>`;
+        const settingsDark = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${webview.cspSource} https://cdn.jsdelivr.net https://www.contenthook.dev; script-src 'nonce-%nonce%' 'self'; img-src https://www.contenthook.dev;"
+    />
+    <title>Contenthook</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body id="body" class="select-none">
+    <div
+      id="main-container"
+      class="p-2 max-w-full mx-auto rounded-xl flex flex-col items-center justify-center"
+    >
+      <div
+        id="logo-container"
+        class="flex flex-row mt-6 items-center justify-center w-full"
+      >
+        <img
+          id="logo-img"
+          src="https://www.contenthook.dev/img/logo.png"
+          alt="Contenthook"
+          draggable="false"
+          class="w-12 h-12"
+        />
+        <div id="logo-text" class="text-xl font-medium text-white">
+          Contenthook
+        </div>
+      </div>
+
+      <p id="intro-text" class="text-white mt-8 text-center">
+        Edit some extra feature settings for your Contenthook project.
+      </p>
+
+      <div
+        id="settings-container"
+        class="flex flex-col mt-8 gap-4 items-center justify-center w-full"
+      >
+        <div
+          id="settings-row"
+          class="flex flex-row items-center justify-between w-full"
+        >
+          <label for="auto-push" id="label-text" class="text-white text-center">
+            Auto-push changes to the Cloud
+          </label>
+          <input
+            type="checkbox"
+            id="auto-push"
+            class="form-checkbox h-5 w-5 text-blue-600"
+          />
+        </div>
+        <div
+          id="settings-row"
+          class="flex flex-row items-center justify-between w-full"
+        >
+          <label for="auto-pull" id="label-text" class="text-white text-center">
+            Auto-pull changes from the Cloud
+          </label>
+          <input
+            type="checkbox"
+            id="auto-pull"
+            class="form-checkbox h-5 w-5 text-blue-600"
+          />
+        </div>
+      </div>
+
+      <div
+        id="action-container"
+        class="flex flex-col mt-8 gap-4 items-center justify-center w-full"
+        style="align-items: center; justify-content: center"
+      >
+        <button
+          id="save-btn"
+          class="bg-gradient-to-br cursor-pointer text-center from-blue-500 to-blue-600 hover:opacity-90 w-full text-white font-bold py-1 px-4 rounded-sm"
+        >
+          Save settings
+        </button>
+      </div>
+    </div>
+
+    <script nonce="%nonce%">
+      const vscode = acquireVsCodeApi();
+
+      let autoPush = document.getElementById("auto-push").checked;
+      let autoPull = document.getElementById("auto-pull").checked;
+
+      document.getElementById("auto-push").addEventListener("change", () => {
+        autoPush = document.getElementById("auto-push").checked;
+      });
+
+      document.getElementById("auto-pull").addEventListener("change", () => {
+        autoPull = document.getElementById("auto-pull").checked;
+      });
+
+      document.getElementById("save-btn").addEventListener("click", () => {
+        vscode.postMessage({
+          type: "saveSettings",
+          message: "Settings saved",
+          autoPush: autoPush,
+          autoPull: autoPull,
+        });
+      });
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.type) {
+          case "configData":
+            const { autopush, autopull } = message.data;
+            document.getElementById("auto-push").checked = autopush;
+            document.getElementById("auto-pull").checked = autopull;
+            break;
+        }
+      });
+    </script>
+
+    <script nonce="%nonce%">
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.command) {
+          case "updateTheme":
+            document.documentElement.innerHTML = message.htmlContent;
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>`;
+        const indexLight = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${webview.cspSource} https://cdn.jsdelivr.net https://www.contenthook.dev; script-src 'nonce-%nonce%' 'self'; img-src https://www.contenthook.dev;"
+    />
+    <title>Contenthook</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body id="body" class="select-none">
+    <div
+      id="main-container"
+      class="p-2 max-w-full mx-auto flex flex-col items-center justify-center"
+    >
+      <div
+        id="logo-container"
+        class="flex flex-row mt-6 items-center justify-center w-full"
+      >
+        <img
+          id="logo-img"
+          class="w-12 h-12"
+          src="https://www.contenthook.dev/img/logo_invert.png"
+          alt="Contenthook"
+          draggable="false"
+        />
+        <div id="logo-text" class="text-xl font-medium text-gray-800">
+          Contenthook
+        </div>
+      </div>
+
+      <p id="intro-text" class="text-gray-800 mt-8 text-center">
+        Initialize a new Contenthook project or open one that already exists.
+      </p>
+
+      <div
+        id="action-container"
+        class="flex flex-col mt-8 gap-4 items-center justify-center w-full"
+      >
+        <button
+          id="init-btn"
+          class="bg-gradient-to-br cursor-pointer text-center from-blue-400 to-blue-500 hover:opacity-90 w-full text-gray-800 font-bold py-1 px-4 rounded-sm"
+        >
+          Initialize new project
+        </button>
+        <p id="open-instruction" class="text-center text-gray-800">
+          to open an existing project, click on the "File" and then "Open
+          Folder" button in the top left corner. Select the folder where your
+          project is located.
+        </p>
+      </div>
+    </div>
+
+    <script nonce="%nonce%">
+      const vscode = acquireVsCodeApi();
+
+      document.getElementById("init-btn").addEventListener("click", () => {
+        vscode.postMessage({
+          type: "init",
+          message: "Initialization started",
+        });
+      });
+    </script>
+
+    <script nonce="%nonce%">
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.command) {
+          case "updateTheme":
+            document.documentElement.innerHTML = message.htmlContent;
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>`;
+        const indexDark = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${webview.cspSource} https://cdn.jsdelivr.net https://www.contenthook.dev; script-src 'nonce-%nonce%' 'self'; img-src https://www.contenthook.dev;"
+    />
+    <title>Contenthook</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body id="body" class="select-none">
+    <div
+      id="main-container"
+      class="p-2 max-w-full mx-auto rounded-xl flex flex-col items-center justify-center"
+    >
+      <div
+        id="logo-container"
+        class="flex flex-row mt-6 items-center justify-center w-full"
+      >
+        <img
+          id="logo-img"
+          src="https://www.contenthook.dev/img/logo.png"
+          alt="Contenthook"
+          draggable="false"
+          class="w-12 h-12"
+        />
+        <div id="logo-text" class="text-xl font-medium text-white">
+          Contenthook
+        </div>
+      </div>
+
+      <p id="intro-text" class="text-white mt-8 text-center">
+        Initialize a new Contenthook project or open one that already exists.
+      </p>
+
+      <div
+        id="action-container"
+        class="flex flex-col mt-6 gap-2 items-center justify-center w-full"
+      >
+        <button
+          id="init-btn"
+          class="bg-gradient-to-br cursor-pointer text-center from-blue-500 to-blue-600 hover:opacity-90 w-full text-white font-bold py-1 px-4 rounded-sm"
+        >
+          Initialize new project
+        </button>
+        <p id="open-instruction" class="text-center text-zinc-800">
+          to open an existing project, click on the "File" and then "Open
+          Folder" button in the top left corner. Select the folder where your
+          project is located.
+        </p>
+      </div>
+    </div>
+
+    <script nonce="%nonce%">
+      const vscode = acquireVsCodeApi();
+
+      document.getElementById("init-btn").addEventListener("click", () => {
+        vscode.postMessage({
+          type: "init",
+          message: "Initialization started",
+        });
+      });
+    </script>
+
+    <script nonce="%nonce%">
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        switch (message.command) {
+          case "updateTheme":
+            document.documentElement.innerHTML = message.htmlContent;
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>`;
+        switch (htmlFileName) {
+            case "settings-light.html":
+                return settingsLight;
+            case "settings-dark.html":
+                return settingsDark;
+            case "index-light.html":
+                return indexLight;
+            case "index-dark.html":
+                return indexDark;
+            default:
+                return "";
+        }
+    }
     async getHtmlForWebview(webview, htmlFileName, nonce) {
         try {
             const themeKind = vscode.window.activeColorTheme.kind;
             const themeHtmlFile = (await themeKind) === vscode.ColorThemeKind.Dark
                 ? `${htmlFileName.replace(".html", "")}-dark.html`
                 : `${htmlFileName.replace(".html", "")}-light.html`;
-            const dataFromGithub = await fetch("https://raw.githubusercontent.com/contenthook/vsc-extension/main/ui/" +
-                themeHtmlFile);
-            const htmlStringFromGithub = await dataFromGithub.text();
-            let htmlString = htmlStringFromGithub;
+            let htmlString = await this.getHtml(webview, themeHtmlFile);
             htmlString = htmlString
                 .replace(/%nonce%/g, nonce ? `${nonce}` : "")
                 .replace('nonce="%nonce%"', nonce ? `nonce='${nonce}'` : "");

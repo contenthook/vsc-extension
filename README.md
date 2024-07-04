@@ -18,6 +18,7 @@
 
 ## Known Issues
 
+- Not automatically starting on vscode start
 - Slow and sometimes not properly working theme switch recognition
 
 ## Release Notes
