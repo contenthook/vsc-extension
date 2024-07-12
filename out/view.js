@@ -513,7 +513,6 @@ class ContenthookViewProvider {
         await vscode.workspace.fs.writeFile(fileUri, dataBytes);
     }
     async getHtml(webview, htmlFileName) {
-        vscode.window.showInformationMessage("Getting HTML...");
         const settingsLight = `<!doctype html>
 <html lang="en">
   <head>

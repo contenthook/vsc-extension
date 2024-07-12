@@ -2,16 +2,17 @@
   "name": "contenthook",
   "displayName": "Contenthook",
   "description": "The extension bringing the contenthook utilities to vscode",
-  "version": "1.0.2",
+  "version": "1.0.10",
   "publisher": "contenthook",
   "icon": "media/logo.png",
+  "main": "./out/extension.js",
   "galleryBanner": {
     "color": "#007ACC",
     "theme": "dark"
   },
   "preview": true,
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.78.0"
   },
   "categories": [
     "Other"
@@ -40,33 +41,13 @@
     "format:check": "prettier --check ."
   },
   "activationEvents": [
-    "onView:contenthookSidebar"
+    "onStartupFinished",
+    "onWebviewPanel:contenthookView"
   ],
-  "main": "./out/extension.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/contenthook/vsc-extension"
   },
-  "badges": [
-    {
-      "url": "https://vsmarketplacebadge.apphb.com/version/contenthook.contenthook.svg",
-      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
-      "description": "Visual Studio Marketplace Version",
-      "type": "svg"
-    },
-    {
-      "url": "https://vsmarketplacebadge.apphb.com/installs-short/contenthook.contenthook.svg",
-      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
-      "description": "Visual Studio Marketplace Installs",
-      "type": "svg"
-    },
-    {
-      "url": "https://vsmarketplacebadge.apphb.com/rating-star/contenthook.contenthook.svg",
-      "href": "https://marketplace.visualstudio.com/items?itemName=contenthook.contenthook",
-      "description": "Visual Studio Marketplace Rating",
-      "type": "svg"
-    }
-  ],
   "contributes": {
     "configuration": {
       "type": "object",
@@ -113,7 +94,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.7",
     "@types/node": "^20.14.9",
-    "@types/vscode": "^1.91.0",
+    "@types/vscode": "^1.78.0",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",

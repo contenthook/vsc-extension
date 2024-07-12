@@ -13,7 +13,6 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   private _activeHtmlFile: string = "";
 
   constructor(private readonly _extensionUri: vscode.Uri) {
-    vscode.window.showInformationMessage("Contenthook loading...");
     this.checkEnvVariableInConfigFile();
     this.connectToWebserver();
     this.setupFileSystemWatcher();
@@ -692,7 +691,6 @@ export class ContenthookViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async getHtml(webview: vscode.Webview, htmlFileName: string) {
-    vscode.window.showInformationMessage("Getting HTML...");
     const settingsLight = `<!doctype html>
 <html lang="en">
   <head>
